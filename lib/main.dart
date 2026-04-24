@@ -2231,6 +2231,7 @@ class _DayEditSheet extends StatefulWidget {
 
 class _DayEditSheetState extends State<_DayEditSheet> {
   List<WorkoutExercise> _exercises = [];
+  List<RunSession> _runs = [];
   bool _loaded = false;
   bool _editMode = false;
 
@@ -2250,7 +2251,10 @@ class _DayEditSheetState extends State<_DayEditSheet> {
         exs = decoded.map((e) => WorkoutExercise.fromJson(e)).toList();
       } catch (_) {}
     }
-    if (mounted) setState(() { _exercises = exs; _loaded = true; });
+    final allRuns = await _loadRunSessions();
+    final runs = allRuns.where((r) =>
+        r.startTime.toIso8601String().startsWith(widget.dateKey)).toList();
+    if (mounted) setState(() { _exercises = exs; _runs = runs; _loaded = true; });
   }
 
   Future<void> _save() async {
@@ -2409,6 +2413,16 @@ class _DayEditSheetState extends State<_DayEditSheet> {
                           onDelete: () { setState(() => _exercises.removeAt(i)); _save(); },
                         );
                       }),
+                    const SizedBox(height: 16),
+                    _SectionHeader(
+                      icon: Icons.directions_run,
+                      title: S.isZh ? '有氧跑步' : 'Aerobic Running',
+                    ),
+                    const SizedBox(height: 8),
+                    if (_runs.isEmpty)
+                      _EmptyHint(S.isZh ? '这天没有跑步记录' : 'No runs recorded')
+                    else
+                      ..._runs.map((r) => _RunHistoryCard(session: r)),
                   ],
                 ),
           ),
