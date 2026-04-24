@@ -2800,6 +2800,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final heightCtrl = TextEditingController(text: _height > 0 ? _height.toStringAsFixed(0) : '');
     final weightCtrl = TextEditingController(text: _weight > 0 ? _weight.toStringAsFixed(0) : '');
     final ageCtrl = TextEditingController(text: _age > 0 ? _age.toString() : '');
+    final weightFocus = FocusNode();
+    final ageFocus = FocusNode();
     String activityLevel = 'sedentary';
 
     showModalBottomSheet(
@@ -2823,9 +2825,13 @@ class _SettingsPageState extends State<SettingsPage> {
             tdee = (calculatedBmr * (multipliers[activityLevel] ?? 1.2)).round();
           }
 
-          // viewInsets.bottom = 键盘高度，确保内容不被键盘遮挡
           final keyboardH = MediaQuery.of(sheetCtx).viewInsets.bottom;
+          final screenH = MediaQuery.of(sheetCtx).size.height;
+          final safeBottom = MediaQuery.of(sheetCtx).padding.bottom;
 
+          // (screenH - keyboardH) * 0.65 shrinks the scroll area as the
+          // keyboard rises, so header + scrollArea + footer + keyboardPadding
+          // never exceeds the screen height.
           return Padding(
             padding: EdgeInsets.only(bottom: keyboardH),
             child: Column(
@@ -2862,7 +2868,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 // 可滚动内容
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(sheetCtx).size.height * 0.65,
+                    maxHeight: (screenH - keyboardH - safeBottom) * 0.65,
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -2895,28 +2901,36 @@ class _SettingsPageState extends State<SettingsPage> {
                         TextField(
                           controller: heightCtrl,
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                               labelText: S.height, hintText: S.heightHint),
                           onChanged: (_) => setDialogState(() {}),
+                          onSubmitted: (_) => weightFocus.requestFocus(),
                         ),
                         const SizedBox(height: 12),
                         // 体重
                         TextField(
                           controller: weightCtrl,
+                          focusNode: weightFocus,
                           keyboardType:
                               const TextInputType.numberWithOptions(decimal: true),
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                               labelText: S.weightLabel, hintText: S.weightHint),
                           onChanged: (_) => setDialogState(() {}),
+                          onSubmitted: (_) => ageFocus.requestFocus(),
                         ),
                         const SizedBox(height: 12),
                         // 年龄
                         TextField(
                           controller: ageCtrl,
+                          focusNode: ageFocus,
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
                           decoration: InputDecoration(
                               labelText: S.age, hintText: S.ageHint),
                           onChanged: (_) => setDialogState(() {}),
+                          onSubmitted: (_) => ageFocus.unfocus(),
                         ),
                         // BMR 结果
                         if (calculatedBmr > 0) ...[
@@ -2991,7 +3005,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                // ── 固定在底部的按钮 ──
+                // ── 固定底部按钮 ──
                 const Divider(height: 1),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -3040,7 +3054,10 @@ class _SettingsPageState extends State<SettingsPage> {
           );
         },
       ),
-    );
+    ).then((_) {
+      weightFocus.dispose();
+      ageFocus.dispose();
+    });
   }
 
   @override
