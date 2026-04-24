@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:http/http.dart' as http;
@@ -25,14 +26,17 @@ Future<void> launchExerciseTutorial(String exerciseName) async {
   await launchUrl(url, mode: LaunchMode.externalApplication);
 }
 
-// ================= 全局语言通知器 =================
+// ================= 全局通知器 =================
 
 final ValueNotifier<String> _langNotifier = ValueNotifier('zh');
+final ValueNotifier<ThemeMode> _themeNotifier = ValueNotifier(ThemeMode.dark);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   _langNotifier.value = prefs.getString('language') ?? 'zh';
+  final themeStr = prefs.getString('theme_mode') ?? 'dark';
+  _themeNotifier.value = themeStr == 'light' ? ThemeMode.light : ThemeMode.dark;
   runApp(const MyApp());
 }
 
@@ -317,17 +321,60 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
       valueListenable: _langNotifier,
-      builder: (context, lang, _) {
-        return MaterialApp(
+      builder: (_, lang, child) => ValueListenableBuilder<ThemeMode>(
+        valueListenable: _themeNotifier,
+        builder: (_, themeMode, child) => MaterialApp(
           title: S.appTitle,
           debugShowCheckedModeBanner: false,
+          themeMode: themeMode,
           theme: ThemeData(
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: const Color(0xFFF2F2F7),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFFF6B35),
+              secondary: Color(0xFFFF6B35),
+              surface: Colors.white,
+              onSurface: Color(0xFF1A1A1A),
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Color(0xFF1A1A1A),
+              elevation: 0,
+              iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
+            ),
+            bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+              backgroundColor: Colors.white,
+              selectedItemColor: Color(0xFFFF6B35),
+              unselectedItemColor: Colors.grey,
+            ),
+            cardTheme: const CardThemeData(color: Colors.white, elevation: 2),
+            listTileTheme: const ListTileThemeData(
+              tileColor: Colors.white,
+              textColor: Color(0xFF1A1A1A),
+              iconColor: Color(0xFF1A1A1A),
+            ),
+            bottomSheetTheme: const BottomSheetThemeData(
+              backgroundColor: Colors.white,
+              modalBackgroundColor: Colors.white,
+            ),
+            dividerColor: Color(0xFFE0E0E0),
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+            textTheme: const TextTheme(
+              bodyLarge: TextStyle(color: Color(0xFF1A1A1A)),
+              bodyMedium: TextStyle(color: Color(0xFF1A1A1A)),
+              bodySmall: TextStyle(color: Color(0xFF555555)),
+              titleMedium: TextStyle(color: Color(0xFF1A1A1A)),
+              titleLarge: TextStyle(color: Color(0xFF1A1A1A)),
+            ),
+          ),
+          darkTheme: ThemeData(
             brightness: Brightness.dark,
             scaffoldBackgroundColor: const Color(0xFF121212),
             colorScheme: const ColorScheme.dark(
               primary: Color(0xFFFF6B35),
               secondary: Color(0xFFFF6B35),
               surface: Color(0xFF1E1E1E),
+              onSurface: Colors.white,
             ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF1E1E1E),
@@ -340,10 +387,27 @@ class MyApp extends StatelessWidget {
               unselectedItemColor: Colors.grey,
             ),
             cardTheme: const CardThemeData(color: Color(0xFF1E1E1E), elevation: 2),
+            listTileTheme: const ListTileThemeData(
+              tileColor: Color(0xFF1E1E1E),
+              textColor: Colors.white,
+            ),
+            bottomSheetTheme: const BottomSheetThemeData(
+              backgroundColor: Color(0xFF1E1E1E),
+              modalBackgroundColor: Color(0xFF1E1E1E),
+            ),
+            dividerColor: Color(0xFF2A2A2A),
+            dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF1E1E1E)),
+            textTheme: const TextTheme(
+              bodyLarge: TextStyle(color: Colors.white),
+              bodyMedium: TextStyle(color: Colors.white),
+              bodySmall: TextStyle(color: Colors.grey),
+              titleMedium: TextStyle(color: Colors.white),
+              titleLarge: TextStyle(color: Colors.white),
+            ),
           ),
           home: const SplashScreen(),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -512,7 +576,6 @@ class _TrainingPageState extends State<TrainingPage> {
   void _showTemplatePicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -522,7 +585,6 @@ class _TrainingPageState extends State<TrainingPage> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              backgroundColor: const Color(0xFF1E1E1E),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               title: Text(template.name,
                   style: const TextStyle(color: Colors.white)),
@@ -592,7 +654,6 @@ class _TrainingPageState extends State<TrainingPage> {
   void _saveAsTemplate() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -639,7 +700,6 @@ class _TrainingPageState extends State<TrainingPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
         title: Row(children: [
           const Text('🏆', style: TextStyle(fontSize: 22)),
           const SizedBox(width: 8),
@@ -702,7 +762,6 @@ class _TrainingPageState extends State<TrainingPage> {
   void _showAddExerciseDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => _ExercisePicker(onSelect: (name, group) {
@@ -1871,7 +1930,6 @@ class _CalendarPageState extends State<CalendarPage>
   void _openDayDetail(String key) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -2294,7 +2352,6 @@ class _DayEditSheetState extends State<_DayEditSheet> {
   void _addExercise() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _ExercisePicker(onSelect: (name, group) {
@@ -2520,7 +2577,6 @@ class _HistoryExerciseCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text(S.isZh ? '编辑组' : 'Edit Set',
           style: const TextStyle(color: Colors.white, fontSize: 16)),
@@ -2820,7 +2876,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
       isScrollControlled: true,
       useRootNavigator: true,
       shape: const RoundedRectangleBorder(
@@ -3103,7 +3158,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(S.bodyDataSettings, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
           ListTile(
-            tileColor: const Color(0xFF1E1E1E),
             leading: const Icon(Icons.monitor_weight_outlined, color: Color(0xFFFF6B35)),
             title: Text(S.bmrTitle),
             subtitle: Text(
@@ -3165,7 +3219,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(S.isZh ? '训练' : 'Training', style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
           ListTile(
-            tileColor: const Color(0xFF1E1E1E),
             leading: const Icon(Icons.library_books_outlined, color: Color(0xFFFF6B35)),
             title: Text(S.isZh ? '训练模版' : 'Workout Templates'),
             subtitle: Text(S.isZh ? '创建和管理常用训练计划' : 'Create & manage training plans'),
@@ -3176,13 +3229,44 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
 
-          // ── 语言设置 ──
+          // ── 外观与语言 ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(S.languageSettings, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            child: Text(S.isZh ? '外观与语言' : 'Appearance & Language',
+                style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
+          // 主题切换行
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: _themeNotifier,
+            builder: (_, mode, child) => Container(
+              color: Theme.of(context).colorScheme.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(mode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+                      color: const Color(0xFFFF6B35)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(S.isZh ? '主题模式' : 'Theme',
+                        style: const TextStyle(fontSize: 16)),
+                  ),
+                  _ThemeToggle(
+                    currentMode: mode,
+                    onChanged: (m) async {
+                      _themeNotifier.value = m;
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString(
+                          'theme_mode', m == ThemeMode.light ? 'light' : 'dark');
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 1, indent: 56),
+          // 语言切换行
           Container(
-            color: const Color(0xFF1E1E1E),
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
@@ -3209,7 +3293,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(S.about, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
           ListTile(
-            tileColor: const Color(0xFF1E1E1E),
             leading: const Icon(Icons.info_outline, color: Colors.grey),
             title: Text(S.version),
             trailing: Text('1.0.0', style: TextStyle(color: Colors.grey[600])),
@@ -3266,6 +3349,77 @@ class _LangChip extends StatelessWidget {
             fontSize: 13,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// 主题切换按钮
+class _ThemeToggle extends StatelessWidget {
+  final ThemeMode currentMode;
+  final ValueChanged<ThemeMode> onChanged;
+
+  const _ThemeToggle({required this.currentMode, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _ThemeChip(
+          icon: Icons.light_mode,
+          label: S.isZh ? '日间' : 'Light',
+          selected: currentMode == ThemeMode.light,
+          onTap: () => onChanged(ThemeMode.light),
+        ),
+        const SizedBox(width: 8),
+        _ThemeChip(
+          icon: Icons.dark_mode,
+          label: S.isZh ? '夜间' : 'Dark',
+          selected: currentMode == ThemeMode.dark,
+          onTap: () => onChanged(ThemeMode.dark),
+        ),
+      ],
+    );
+  }
+}
+
+class _ThemeChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ThemeChip(
+      {required this.icon, required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFF6B35) : Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? const Color(0xFFFF6B35) : Colors.grey[500]!,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: selected ? Colors.white : Colors.grey),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.grey,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -3391,7 +3545,6 @@ class _ApiKeyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      tileColor: const Color(0xFF1E1E1E),
       leading: Icon(icon, color: const Color(0xFFFF6B35)),
       title: Text(title),
       subtitle: Text(
@@ -3404,7 +3557,6 @@ class _ApiKeyTile extends StatelessWidget {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E),
             title: Text(title, style: const TextStyle(fontSize: 15)),
             content: TextField(
               controller: ctrl,
@@ -3632,7 +3784,6 @@ class _TemplateManagerPageState extends State<_TemplateManagerPage> {
             onPressed: () async {
               await showModalBottomSheet(
                 context: context,
-                backgroundColor: const Color(0xFF1A1A1A),
                 isScrollControlled: true,
                 shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -3655,7 +3806,6 @@ class _TemplateManagerPageState extends State<_TemplateManagerPage> {
               itemBuilder: (_, i) {
                 final t = _templates[i];
                 return ListTile(
-                  tileColor: const Color(0xFF1E1E1E),
                   leading: const Icon(Icons.library_books_outlined, color: Color(0xFFFF6B35)),
                   title: Text(t.name),
                   subtitle: Text('${t.exercises.length} ${S.isZh ? "动作" : "exercises"} · ${t.muscleGroups.join(", ")}',
@@ -3688,7 +3838,6 @@ class _CreateEditTemplateSheetState extends State<_CreateEditTemplateSheet> {
   void _addExercise() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _ExercisePicker(onSelect: (name, group) {
@@ -3753,7 +3902,6 @@ class _CreateEditTemplateSheetState extends State<_CreateEditTemplateSheet> {
               padding: const EdgeInsets.all(16),
               children: [
                 ..._exercises.asMap().entries.map((e) => ListTile(
-                  tileColor: const Color(0xFF1E1E1E),
                   title: Text(e.value.name),
                   subtitle: Text(e.value.muscleGroup,
                       style: const TextStyle(color: Color(0xFFFF6B35), fontSize: 12)),
@@ -4027,7 +4175,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
       body: FadeTransition(
         opacity: _fade,
         child: Center(
@@ -4099,6 +4246,7 @@ class _AerobicPageState extends State<AerobicPage> {
   final List<LatLng> _routePoints = [];
   StreamSubscription<Position>? _gpsSub;
   double _distanceKm = 0;
+  final MapController _mapController = MapController();
 
   // Timer
   Timer? _runTimer;
@@ -4135,6 +4283,7 @@ class _AerobicPageState extends State<AerobicPage> {
   @override
   void dispose() {
     _cancelAllStreams();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -4229,9 +4378,20 @@ class _AerobicPageState extends State<AerobicPage> {
   }
 
   void _startGps() {
+    // 先主动获取一次当前位置作为起点，避免等待流的第一次回调
+    Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    ).then((pos) {
+      if (!_runActive || !mounted) return;
+      final latLng = LatLng(pos.latitude, pos.longitude);
+      setState(() => _routePoints.add(latLng));
+      _mapController.move(latLng, 17);
+    }).catchError((_) {});
+
+    // distanceFilter: 0 — 只要位置有变化就立即回调，不需要移动满5米
     const settings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 5,
+      distanceFilter: 0,
     );
     _gpsSub =
         Geolocator.getPositionStream(locationSettings: settings).listen(
@@ -4240,12 +4400,18 @@ class _AerobicPageState extends State<AerobicPage> {
         final latLng = LatLng(pos.latitude, pos.longitude);
         setState(() {
           if (_routePoints.isNotEmpty) {
-            _distanceKm += _haversineKm(_routePoints.last, latLng);
+            final d = _haversineKm(_routePoints.last, latLng);
+            if (d > 0.002) {
+              _distanceKm += d;
+              _routePoints.add(latLng);
+            }
+          } else {
+            _routePoints.add(latLng);
           }
-          _routePoints.add(latLng);
         });
+        _mapController.move(latLng, 17);
       },
-      onError: (e) {}, // simulator: kCLErrorLocationUnknown — silently ignore
+      onError: (e) {}, // 模拟器 kCLErrorLocationUnknown — 静默忽略
       cancelOnError: false,
     );
   }
@@ -4404,16 +4570,21 @@ class _AerobicPageState extends State<AerobicPage> {
 
   @override
   Widget build(BuildContext context) {
-    return switch (_runState) {
-      _RunState.idle => _buildIdleView(),
-      _RunState.running || _RunState.paused => _buildRunningView(),
-    };
+    // IndexedStack keeps both views in the widget tree at all times.
+    // FlutterMap inside the running view is never disposed → no NSURLSession
+    // cancellation on iOS main thread → no freeze when stopping/pausing.
+    return IndexedStack(
+      index: _runState == _RunState.idle ? 0 : 1,
+      children: [
+        _buildIdleView(),
+        _buildRunningView(),
+      ],
+    );
   }
 
   // ─── IDLE ───
   Widget _buildIdleView() {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: Text(S.navRunning),
         actions: [
@@ -4613,7 +4784,6 @@ class _AerobicPageState extends State<AerobicPage> {
   Widget _buildRunningView() {
     final isPaused = _runState == _RunState.paused;
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
       body: SafeArea(
         child: Column(
           children: [
@@ -4621,37 +4791,91 @@ class _AerobicPageState extends State<AerobicPage> {
               flex: 4,
               child: Stack(
                 children: [
-                  // Route canvas — pure CustomPainter, zero network calls.
-                  // Eliminates NSURLSession tile-cancellation freeze on iOS.
-                  SizedBox.expand(
-                    child: _routePoints.isNotEmpty
-                        ? CustomPaint(
-                            painter: _RoutePainter(_routePoints),
-                          )
-                        : Container(
-                            color: const Color(0xFF1A1A2E),
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.gps_not_fixed,
-                                      color: Colors.grey, size: 40),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _locGranted
-                                        ? (S.isZh
-                                            ? '正在获取 GPS 信号...'
-                                            : 'Acquiring GPS...')
-                                        : (S.isZh
-                                            ? 'GPS 未授权'
-                                            : 'GPS not permitted'),
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 13),
-                                  ),
-                                ],
+                  // OpenStreetMap via flutter_map.
+                  // Kept alive by IndexedStack — never disposed during
+                  // pause/stop, so no NSURLSession cancel freeze on iOS.
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _routePoints.isNotEmpty
+                          ? _routePoints.last
+                          : const LatLng(51.5074, -0.1278),
+                      initialZoom: 17,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.pinchZoom,
+                      ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.ethanhxy.fitnessapp',
+                      ),
+                      if (_routePoints.length >= 2)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: _routePoints,
+                              strokeWidth: 4,
+                              color: const Color(0xFFFF6B35),
+                            ),
+                          ],
+                        ),
+                      if (_routePoints.isNotEmpty)
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: _routePoints.last,
+                              width: 22,
+                              height: 22,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF6B35),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: Colors.white, width: 3),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        color: Colors.black38, blurRadius: 4)
+                                  ],
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                      // GPS 信号等待提示（还没有位置点时显示）
+                      if (_routePoints.isEmpty)
+                        Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.gps_not_fixed,
+                                    color: Colors.white70, size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _locGranted
+                                      ? (S.isZh
+                                          ? '正在获取 GPS 信号...'
+                                          : 'Acquiring GPS...')
+                                      : (S.isZh
+                                          ? 'GPS 未授权'
+                                          : 'GPS not permitted'),
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 13),
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                    ],
                   ),
                   if (isPaused)
                     Container(
@@ -4778,65 +5002,6 @@ class _AerobicPageState extends State<AerobicPage> {
 }
 
 // ─── Aerobic helper widgets ───
-
-/// Draws the GPS route as an orange polyline on a dark background.
-/// No network calls — eliminates NSURLSession freeze on iOS.
-class _RoutePainter extends CustomPainter {
-  final List<LatLng> points;
-  const _RoutePainter(this.points);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()..color = const Color(0xFF1A1A2E),
-    );
-    if (points.length < 2) {
-      // Single point — draw dot only
-      if (points.isNotEmpty) {
-        canvas.drawCircle(Offset(size.width / 2, size.height / 2), 6,
-            Paint()..color = const Color(0xFFFF6B35));
-      }
-      return;
-    }
-
-    double minLat = points.first.latitude, maxLat = points.first.latitude;
-    double minLon = points.first.longitude, maxLon = points.first.longitude;
-    for (final p in points) {
-      if (p.latitude < minLat) minLat = p.latitude;
-      if (p.latitude > maxLat) maxLat = p.latitude;
-      if (p.longitude < minLon) minLon = p.longitude;
-      if (p.longitude > maxLon) maxLon = p.longitude;
-    }
-    final latSpan = (maxLat - minLat).clamp(0.0001, double.infinity);
-    final lonSpan = (maxLon - minLon).clamp(0.0001, double.infinity);
-    const pad = 24.0;
-
-    Offset project(LatLng p) => Offset(
-          pad + (p.longitude - minLon) / lonSpan * (size.width - 2 * pad),
-          size.height -
-              pad -
-              (p.latitude - minLat) / latSpan * (size.height - 2 * pad),
-        );
-
-    final linePaint = Paint()
-      ..color = const Color(0xFFFF6B35)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    for (int i = 0; i < points.length - 1; i++) {
-      canvas.drawLine(project(points[i]), project(points[i + 1]), linePaint);
-    }
-
-    // Current position marker
-    final cur = project(points.last);
-    canvas.drawCircle(cur, 8, Paint()..color = const Color(0xFFFF6B35));
-    canvas.drawCircle(cur, 5, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(_RoutePainter old) => old.points != points;
-}
 
 class _EnvChip extends StatelessWidget {
   final String label, value;
