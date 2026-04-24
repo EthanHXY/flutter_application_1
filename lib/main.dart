@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:http/http.dart' as http;
@@ -4057,7 +4056,6 @@ class _AerobicPageState extends State<AerobicPage> {
   final List<LatLng> _routePoints = [];
   StreamSubscription<Position>? _gpsSub;
   double _distanceKm = 0;
-  final MapController _mapController = MapController();
 
   // Timer
   Timer? _runTimer;
@@ -4168,11 +4166,16 @@ class _AerobicPageState extends State<AerobicPage> {
       _lastMag = 0;
     });
     _startTimer();
-    // Start each native stream only once — reuse across run sessions.
-    // Streams run silently between runs (gated by _runActive = false).
-    if (_accelSub == null) _startAccelerometer();
-    if (_stepSub == null) _startStepCounter();
-    if (_gpsSub == null && _locGranted) _startGps();
+    // Defer native sensor streams until AFTER the running view renders.
+    // Starting sensors synchronously during the button handler floods the
+    // event loop (60 Hz accelerometer events) before Flutter can render
+    // the first frame → perceived freeze on tap.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_runActive) return;
+      if (_accelSub == null) _startAccelerometer();
+      if (_stepSub == null) _startStepCounter();
+      if (_gpsSub == null && _locGranted) _startGps();
+    });
   }
 
   void _startTimer() {
@@ -4198,9 +4201,6 @@ class _AerobicPageState extends State<AerobicPage> {
           }
           _routePoints.add(latLng);
         });
-        try {
-          _mapController.move(latLng, _mapController.camera.zoom);
-        } catch (_) {}
       },
       onError: (e) {}, // simulator: kCLErrorLocationUnknown — silently ignore
       cancelOnError: false,
@@ -4224,7 +4224,7 @@ class _AerobicPageState extends State<AerobicPage> {
     const threshold = 12.0;
     const cadenceWindowSec = 5;
     _accelSub = accelerometerEventStream(
-            samplingPeriod: SensorInterval.gameInterval)
+            samplingPeriod: const Duration(milliseconds: 100))
         .listen(
       (event) {
         if (!_runActive) return;
@@ -4578,75 +4578,38 @@ class _AerobicPageState extends State<AerobicPage> {
               flex: 4,
               child: Stack(
                 children: [
-                  // Only render FlutterMap (and fire tile network requests)
-                  // once we have a real GPS coordinate. Before that, show a
-                  // plain placeholder — avoids iOS blocking the main thread
-                  // when cancelling pending URLSessionTasks on pause/stop.
-                  if (_routePoints.isNotEmpty)
-                    FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        initialCenter: _routePoints.last,
-                        initialZoom: 16,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName:
-                              'com.example.flutter_application_1',
-                        ),
-                        if (_routePoints.length >= 2)
-                          PolylineLayer(
-                            polylines: [
-                              Polyline(
-                                points: _routePoints,
-                                color: const Color(0xFFFF6B35),
-                                strokeWidth: 4,
+                  // Route canvas — pure CustomPainter, zero network calls.
+                  // Eliminates NSURLSession tile-cancellation freeze on iOS.
+                  SizedBox.expand(
+                    child: _routePoints.isNotEmpty
+                        ? CustomPaint(
+                            painter: _RoutePainter(_routePoints),
+                          )
+                        : Container(
+                            color: const Color(0xFF1A1A2E),
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.gps_not_fixed,
+                                      color: Colors.grey, size: 40),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _locGranted
+                                        ? (S.isZh
+                                            ? '正在获取 GPS 信号...'
+                                            : 'Acquiring GPS...')
+                                        : (S.isZh
+                                            ? 'GPS 未授权'
+                                            : 'GPS not permitted'),
+                                    style: const TextStyle(
+                                        color: Colors.grey, fontSize: 13),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: _routePoints.last,
-                              width: 20,
-                              height: 20,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B35),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: Colors.white, width: 3),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  else
-                    // GPS not yet connected — placeholder, no network requests
-                    Container(
-                      color: const Color(0xFF1A1A2E),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.gps_not_fixed,
-                                color: Colors.grey, size: 40),
-                            const SizedBox(height: 8),
-                            Text(
-                              _locGranted
-                                  ? (S.isZh ? '正在获取 GPS 信号...' : 'Acquiring GPS...')
-                                  : (S.isZh ? 'GPS 未授权' : 'GPS not permitted'),
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  ),
                   if (isPaused)
                     Container(
                       color: Colors.black45,
@@ -4773,6 +4736,65 @@ class _AerobicPageState extends State<AerobicPage> {
 
 // ─── Aerobic helper widgets ───
 
+/// Draws the GPS route as an orange polyline on a dark background.
+/// No network calls — eliminates NSURLSession freeze on iOS.
+class _RoutePainter extends CustomPainter {
+  final List<LatLng> points;
+  const _RoutePainter(this.points);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = const Color(0xFF1A1A2E),
+    );
+    if (points.length < 2) {
+      // Single point — draw dot only
+      if (points.isNotEmpty) {
+        canvas.drawCircle(Offset(size.width / 2, size.height / 2), 6,
+            Paint()..color = const Color(0xFFFF6B35));
+      }
+      return;
+    }
+
+    double minLat = points.first.latitude, maxLat = points.first.latitude;
+    double minLon = points.first.longitude, maxLon = points.first.longitude;
+    for (final p in points) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLon) minLon = p.longitude;
+      if (p.longitude > maxLon) maxLon = p.longitude;
+    }
+    final latSpan = (maxLat - minLat).clamp(0.0001, double.infinity);
+    final lonSpan = (maxLon - minLon).clamp(0.0001, double.infinity);
+    const pad = 24.0;
+
+    Offset project(LatLng p) => Offset(
+          pad + (p.longitude - minLon) / lonSpan * (size.width - 2 * pad),
+          size.height -
+              pad -
+              (p.latitude - minLat) / latSpan * (size.height - 2 * pad),
+        );
+
+    final linePaint = Paint()
+      ..color = const Color(0xFFFF6B35)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (int i = 0; i < points.length - 1; i++) {
+      canvas.drawLine(project(points[i]), project(points[i + 1]), linePaint);
+    }
+
+    // Current position marker
+    final cur = project(points.last);
+    canvas.drawCircle(cur, 8, Paint()..color = const Color(0xFFFF6B35));
+    canvas.drawCircle(cur, 5, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(_RoutePainter old) => old.points != points;
+}
+
 class _EnvChip extends StatelessWidget {
   final String label, value;
   final Color color;
@@ -4842,26 +4864,6 @@ class _StatCell extends StatelessWidget {
   }
 }
 
-class _SummaryItem extends StatelessWidget {
-  final String label, value;
-  const _SummaryItem({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold)),
-        Text(label,
-            style: const TextStyle(
-                color: Colors.grey, fontSize: 12)),
-      ],
-    );
-  }
-}
 
 class _RunHistoryCard extends StatelessWidget {
   final RunSession session;
