@@ -2811,7 +2811,7 @@ class _SettingsPageState extends State<SettingsPage> {
       useRootNavigator: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetCtx) => StatefulBuilder(
+      builder: (_) => StatefulBuilder(
         builder: (sheetCtx, setDialogState) {
           double h = double.tryParse(heightCtrl.text) ?? 0;
           double w = double.tryParse(weightCtrl.text) ?? 0;
@@ -3032,14 +3032,23 @@ class _SettingsPageState extends State<SettingsPage> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () {
+                            // 1. Snapshot values while controllers are alive.
+                            final g = gender;
+                            final h = double.tryParse(heightCtrl.text) ?? 0;
+                            final w = double.tryParse(weightCtrl.text) ?? 0;
+                            final a = int.tryParse(ageCtrl.text) ?? 0;
+                            // 2. Close sheet first — iOS dismisses keyboard
+                            //    naturally during route removal, avoiding the
+                            //    unfocus+pop race that freezes on iOS 26.
+                            Navigator.pop(sheetCtx);
+                            // 3. Update outer state and persist after pop.
                             setState(() {
-                              _gender = gender;
-                              _height = double.tryParse(heightCtrl.text) ?? 0;
-                              _weight = double.tryParse(weightCtrl.text) ?? 0;
-                              _age = int.tryParse(ageCtrl.text) ?? 0;
+                              _gender = g;
+                              _height = h;
+                              _weight = w;
+                              _age = a;
                             });
                             _saveSettings();
-                            Navigator.pop(sheetCtx);
                           },
                           child: Text(S.save),
                         ),
@@ -3055,6 +3064,9 @@ class _SettingsPageState extends State<SettingsPage> {
         },
       ),
     ).then((_) {
+      heightCtrl.dispose();
+      weightCtrl.dispose();
+      ageCtrl.dispose();
       weightFocus.dispose();
       ageFocus.dispose();
     });
