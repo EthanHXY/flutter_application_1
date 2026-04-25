@@ -135,7 +135,7 @@ lib/
 
 See [`/docs/screenshots/`](docs/screenshots/) for app screenshots.
 
-Demo video: *(add link here after recording)*
+Demo video: [▶ Watch on YouTube](https://youtube.com/shorts/LG8FoDgh3UU)
 
 ---
 
