@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urban FitLog – Connected Environments Fitness Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: #f0f0f0;
+      line-height: 1.6;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      text-align: center;
+      padding: 80px 24px 60px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,107,53,0.15);
+      border: 1px solid #ff6b35;
+      color: #ff6b35;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: #ff6b35; }
+    .hero p {
+      font-size: 1.15rem;
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto 36px;
+    }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .btn-primary { background: #ff6b35; color: #fff; }
+    .btn-secondary {
+      background: transparent;
+      color: #f0f0f0;
+      border: 1px solid #444;
+    }
+
+    /* ── SECTION ── */
+    section { padding: 64px 24px; max-width: 1000px; margin: 0 auto; }
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ff6b35;
+      margin-bottom: 12px;
+    }
+    section h2 {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    section > p { color: #aaa; max-width: 680px; margin-bottom: 40px; font-size: 1rem; }
+
+    /* ── FEATURE GRID ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { border-color: #ff6b35; transform: translateY(-3px); }
+    .feature-icon { font-size: 2rem; margin-bottom: 14px; }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+    .feature-card p { color: #888; font-size: 0.9rem; line-height: 1.6; }
+
+    /* ── SENSOR / API TABLE ── */
+    .table-section { background: #13131f; border-top: 1px solid #2a2a4a; border-bottom: 1px solid #2a2a4a; }
+    .table-section section { padding: 56px 24px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #666;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    td { padding: 12px 0; border-bottom: 1px solid #1e1e30; font-size: 0.9rem; color: #ccc; vertical-align: top; }
+    td:first-child { font-weight: 600; color: #ff6b35; padding-right: 20px; white-space: nowrap; }
+
+    /* ── SCREENSHOTS ── */
+    .screenshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .screenshot-placeholder {
+      background: #1a1a2e;
+      border: 1px dashed #2a2a4a;
+      border-radius: 20px;
+      aspect-ratio: 9/19.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      color: #444;
+      font-size: 0.75rem;
+    }
+    .screenshot-placeholder span { font-size: 1.8rem; }
+    .screenshot-img {
+      border-radius: 20px;
+      width: 100%;
+      border: 1px solid #2a2a4a;
+      display: block;
+    }
+
+    /* ── STORY ── */
+    .story-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      padding-left: 40px;
+    }
+    .story-steps::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: linear-gradient(to bottom, #ff6b35, #3a3a6a);
+    }
+    .story-step { position: relative; padding: 0 0 32px 24px; }
+    .story-dot {
+      position: absolute;
+      left: -28px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ff6b35;
+      border: 2px solid #0f0f1a;
+    }
+    .story-step h4 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .story-step p { color: #888; font-size: 0.9rem; }
+
+    /* ── TECH STACK ── */
+    .tech-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+    .pill {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+    .pill strong { color: #ff6b35; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #0a0a14;
+      border-top: 1px solid #1a1a2e;
+      text-align: center;
+      padding: 36px 24px;
+      color: #555;
+      font-size: 0.85rem;
+    }
+    footer a { color: #ff6b35; text-decoration: none; }
+
+    /* ── DIVIDER ── */
+    hr { border: none; border-top: 1px solid #1e1e30; margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">CASA0015 · UCL Connected Environments</div>
+  <h1>Urban <span>FitLog</span></h1>
+  <p>A real-time fitness tracker that combines GPS route mapping, accelerometer cadence sensing, and live weather &amp; air quality data — built for urban runners.</p>
+  <div class="hero-buttons">
+    <a class="btn btn-primary" href="https://github.com/EthanHXY/flutter_application_1">View Source Code</a>
+    <a class="btn btn-secondary" href="#features">Explore Features ↓</a>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">What it does</div>
+  <h2>Everything a connected runner needs</h2>
+  <p>Urban FitLog fuses onboard phone sensors with cloud APIs to give you a complete picture of every workout — physical performance and environmental context together.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🗺️</div>
+      <h3>Live GPS Route Map</h3>
+      <p>Real-time position tracking with OpenStreetMap tiles. Route drawn as an orange polyline as you run.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌫️</div>
+      <h3>Air Quality Index</h3>
+      <p>Live AQI from AQICN API. Color-coded run-readiness assessment before you start — Good, Moderate, Unhealthy.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌡️</div>
+      <h3>Real-Time Weather</h3>
+      <p>Temperature, humidity, and wind fetched from OpenWeatherMap based on your exact GPS location.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">👟</div>
+      <h3>Cadence &amp; Steps</h3>
+      <p>Accelerometer-derived steps per minute (SPM) and pedometer step count tracked throughout every run.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏋️</div>
+      <h3>Strength Training</h3>
+      <p>Log sets, weight and reps from a 50+ exercise database. Workout templates, rest timer, calorie tracking.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Activity Calendar</h3>
+      <p>Monthly view with per-day training volume and run distance badges. Tap to review full session details.</p>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- SENSORS + APIs -->
+<div class="table-section">
+  <section>
+    <div class="two-col">
+      <div>
+        <div class="section-label">Hardware</div>
+        <h2>Onboard Sensors</h2>
+        <table>
+          <thead><tr><th>Sensor</th><th>Data</th></tr></thead>
+          <tbody>
+            <tr><td>GPS</td><td>Position, route, distance, pace</td></tr>
+            <tr><td>Accelerometer</td><td>Movement magnitude → cadence (SPM)</td></tr>
+            <tr><td>Pedometer</td><td>Cumulative step count</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="section-label">Cloud</div>
+        <h2>External APIs</h2>
+        <table>
+          <thead><tr><th>API</th><th>Data</th></tr></thead>
+          <tbody>
+            <tr><td>OpenWeatherMap</td><td>Temp, humidity, wind, description</td></tr>
+            <tr><td>AQICN</td><td>Real-time AQI index + category</td></tr>
+            <tr><td>CARTO / OSM</td><td>Map tile imagery</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<hr />
+
+<!-- USER JOURNEY / STORY -->
+<section>
+  <div class="section-label">User Journey</div>
+  <h2>A run, from start to finish</h2>
+  <p>Urban FitLog guides the user through a meaningful interaction with their environment — from pre-run assessment to post-run reflection.</p>
+  <div class="story-steps">
+    <div class="story-step">
+      <div class="story-dot"></div>
+      <h4>1. Check the environment</h4>
+      <p>Open the Running tab. AQI and weather load automatically from your GPS location. Green badge = safe to run.</p>
+    </div>
+    <div class="story-step">
+      <div class="story-dot"></div>
+      <h4>2. Start your run</h4>
+      <p>Tap Start Run. GPS locks on instantly. The map appears with your position marked in orange.</p>
+    </div>
+    <div class="story-step">
+      <div class="story-dot"></div>
+      <h4>3. Track in real time</h4>
+      <p>Distance, pace, duration, step count, cadence, and live AQI update every second as you move.</p>
+    </div>
+    <div class="story-step">
+      <div class="story-dot"></div>
+      <h4>4. Finish and save</h4>
+      <p>Tap Stop. Your session — including route, duration, calories, and environment data — is saved automatically.</p>
+    </div>
+    <div class="story-step">
+      <div class="story-dot"></div>
+      <h4>5. Review in the Calendar</h4>
+      <p>Every run and training session appears in the monthly calendar with distance and volume badges.</p>
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- SCREENSHOTS -->
+<section>
+  <div class="section-label">Gallery</div>
+  <h2>App Screenshots</h2>
+  <div class="screenshots-grid" id="screenshotGrid">
+    <!-- JS will replace these with real images if found -->
+    <div class="screenshot-placeholder"><span>🏃</span>Running</div>
+    <div class="screenshot-placeholder"><span>🗺️</span>Map</div>
+    <div class="screenshot-placeholder"><span>🏋️</span>Training</div>
+    <div class="screenshot-placeholder"><span>📅</span>Calendar</div>
+    <div class="screenshot-placeholder"><span>⚙️</span>Settings</div>
+  </div>
+  <p style="color:#555; font-size:0.8rem; margin-top:16px;">
+    Screenshots updated after recording demo. See /docs/screenshots/.
+  </p>
+</section>
+
+<hr />
+
+<!-- TECH STACK -->
+<section>
+  <div class="section-label">Built with</div>
+  <h2>Tech Stack</h2>
+  <div class="tech-pills">
+    <div class="pill"><strong>Flutter</strong> 3.x (Dart)</div>
+    <div class="pill"><strong>flutter_map</strong> 7.x</div>
+    <div class="pill"><strong>geolocator</strong> 13.x</div>
+    <div class="pill"><strong>sensors_plus</strong> 6.x</div>
+    <div class="pill"><strong>pedometer</strong> 4.x</div>
+    <div class="pill"><strong>http</strong> 1.x</div>
+    <div class="pill"><strong>shared_preferences</strong> 2.x</div>
+    <div class="pill"><strong>OpenWeatherMap API</strong></div>
+    <div class="pill"><strong>AQICN API</strong></div>
+    <div class="pill"><strong>CARTO / OSM Tiles</strong></div>
+    <div class="pill"><strong>iOS</strong> + Android</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Urban FitLog &mdash; CASA0015 Mobile Systems and Interactions · UCL Bartlett</p>
+  <p style="margin-top:8px;">
+    Built by <a href="https://github.com/EthanHXY">Ethan Han</a> &middot;
+    <a href="https://github.com/EthanHXY/flutter_application_1">GitHub Repository</a>
+  </p>
+</footer>
+
+</body>
+</html>
