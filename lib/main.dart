@@ -4807,9 +4807,15 @@ class _AerobicPageState extends State<AerobicPage> {
                     ),
                     children: [
                       TileLayer(
+                        // CARTO Voyager — 全球可用，无需 API Key，速度快
                         urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
                         userAgentPackageName: 'com.ethanhxy.fitnessapp',
+                        maxNativeZoom: 19,
+                        // 如果 CARTO 也不可用，回退到 OSM
+                        fallbackUrl:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       ),
                       if (_routePoints.length >= 2)
                         PolylineLayer(
