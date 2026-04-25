@@ -145,6 +145,8 @@
       border: 1px solid #2a2a4a;
       display: block;
     }
+    .screenshot-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .screenshot-label { font-size: 0.75rem; color: #666; text-align: center; }
 
     /* ── STORY ── */
     .story-steps {
@@ -357,16 +359,37 @@
   <div class="section-label">Gallery</div>
   <h2>App Screenshots</h2>
   <div class="screenshots-grid" id="screenshotGrid">
-    <!-- JS will replace these with real images if found -->
-    <div class="screenshot-placeholder"><span>🏃</span>Running</div>
-    <div class="screenshot-placeholder"><span>🗺️</span>Map</div>
-    <div class="screenshot-placeholder"><span>🏋️</span>Training</div>
-    <div class="screenshot-placeholder"><span>📅</span>Calendar</div>
-    <div class="screenshot-placeholder"><span>⚙️</span>Settings</div>
+    <div class="screenshot-item">
+      <img class="screenshot-img" src="screenshots/01-splash.png" alt="Splash Screen"
+           onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span>🚀</span>Splash</div>'">
+      <p class="screenshot-label">Launch</p>
+    </div>
+    <div class="screenshot-item">
+      <img class="screenshot-img" src="screenshots/02-training.png" alt="Strength Training"
+           onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span>🏋️</span>Training</div>'">
+      <p class="screenshot-label">Strength Training</p>
+    </div>
+    <div class="screenshot-item">
+      <img class="screenshot-img" src="screenshots/03-exercise-picker.png" alt="Exercise Picker"
+           onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span>📋</span>Exercises</div>'">
+      <p class="screenshot-label">Exercise Picker</p>
+    </div>
+    <div class="screenshot-item">
+      <img class="screenshot-img" src="screenshots/04-running-map.png" alt="Running with Map"
+           onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span>🗺️</span>Running</div>'">
+      <p class="screenshot-label">Live GPS Run</p>
+    </div>
+    <div class="screenshot-item">
+      <img class="screenshot-img" src="screenshots/05-calendar.png" alt="Activity Calendar"
+           onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span>📅</span>Calendar</div>'">
+      <p class="screenshot-label">Calendar</p>
+    </div>
+    <div class="screenshot-item">
+      <img class="screenshot-img" src="screenshots/06-settings.png" alt="Settings"
+           onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span>⚙️</span>Settings</div>'">
+      <p class="screenshot-label">Settings</p>
+    </div>
   </div>
-  <p style="color:#555; font-size:0.8rem; margin-top:16px;">
-    Screenshots updated after recording demo. See /docs/screenshots/.
-  </p>
 </section>
 
 <hr />
